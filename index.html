@@ -119,7 +119,8 @@
                 CRYSTALS: 4500,  
                 RIBBONS: 3500, 
                 ORBS: 1200,
-                SPARKLES: 3500 
+                SPARKLES: 3500,
+                SNOW: 1200 // 大幅减少雪量，保持清爽
             },
             FORM: {
                 HEIGHT: 72,
@@ -129,7 +130,7 @@
             LOOK: {
                 BLOOM_STRENGTH: 0.8, 
                 BLOOM_RADIUS: 0.6,   
-                BLOOM_THRESHOLD: 0.85, // 保持高阈值，分离闪光和树身
+                BLOOM_THRESHOLD: 0.85, 
                 EXPOSURE: 0.95,      
                 
                 ZOOM_BLOOM: 0.2,
@@ -143,17 +144,19 @@
                 SNOW_WHITE: new THREE.Color('#FFFFFF')  
             },
             PHOTOS: [
-                // 记得这里要改成你自己的 photos/1.jpg 等路径
-                'https://picsum.photos/id/1027/600/600', 
-                'https://picsum.photos/id/164/600/600',  
-                'https://picsum.photos/id/237/600/600',  
-                'https://picsum.photos/id/338/600/600',  
-                'https://picsum.photos/id/1011/600/600', 
+                'photos/1.jpg',  
+                'photos/2.jpg',  
+                'photos/3.jpg',  
+                'photos/4.jpg',  
+                'photos/5.jpg',  
+                'photos/6.jpg', 
             ]
         };
 
         let scene, camera, renderer, composer, bloomPass;
-        let starSystem, photoGroup, topperMesh, sparkleSystem; 
+        let starSystem, photoGroup, topperMesh, sparkleSystem, snowSystem; 
+        // 新增：treeGroup 用于统一管理旋转的树木主体
+        let treeGroup; 
         let clock = new THREE.Clock();
         const raycaster = new THREE.Raycaster();
         
@@ -231,7 +234,54 @@
             }
         `;
 
-        // 修复：移除所有中文注释，防止编译错误
+        // ------------------ 雪花 Shader (静谧微尘版) ------------------
+        const snowVertexShader = `
+            uniform float uTime;
+            uniform float uPixelRatio;
+            
+            attribute vec3 aRandom; 
+            
+            void main() {
+                vec3 pos = position;
+                
+                // 极慢的下落速度，制造漂浮感
+                float fallSpeed = 0.5 + aRandom.y * 0.8; 
+                float yOffset = mod(uTime * fallSpeed, 120.0); 
+                
+                pos.y -= yOffset;
+                if (pos.y < -60.0) pos.y += 120.0;
+                
+                // 空气扰动
+                float windX = sin(uTime * 0.2 + aRandom.x * 10.0) * 1.5;
+                float windZ = cos(uTime * 0.15 + aRandom.z * 10.0) * 1.5;
+                pos.x += windX;
+                pos.z += windZ;
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+                
+                // 尺寸极小，像微尘
+                float size = (1.0 + aRandom.z * 1.5) * (300.0 / -mvPosition.z) * uPixelRatio;
+                gl_PointSize = size;
+            }
+        `;
+
+        const snowFragmentShader = `
+            void main() {
+                vec2 uv = gl_PointCoord - 0.5;
+                float dist = length(uv);
+                if(dist > 0.5) discard;
+                
+                // 极其柔和的羽化边缘，中心实，周围虚
+                float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                alpha = pow(alpha, 1.5); // 稍微实一点点，不要太糊
+                
+                // 纯白但低透明度，不抢眼
+                gl_FragColor = vec4(1.0, 1.0, 1.0, alpha * 0.5);
+            }
+        `;
+
+        // ------------------ 交互式反光 Shader ------------------
         const sparkleVertexShader = `
             uniform float uTime;
             uniform float uProgress; 
@@ -259,12 +309,20 @@
 
                 float radius = length(posTree.xz);
                 radius *= (0.3 + 0.7 * aRandom.y);
-                
                 float randomAngle = aRandom.z * PI * 20.0; 
                 posTree.x = cos(randomAngle) * radius;
                 posTree.z = sin(randomAngle) * radius;
 
-                vec3 pos = posTree; 
+                vec3 explodeDir = normalize(posTree); 
+                float dist = 60.0 + aRandom.z * 120.0; 
+                vec3 posGalaxy = explodeDir * dist;
+                float spin = length(posGalaxy.xz) * 0.01;
+                posGalaxy.xz = rotate2d(spin + uProgress * 0.5) * posGalaxy.xz;
+                posGalaxy.y += sin(uTime * 0.5 + aRandom.x * 10.0) * 5.0;
+
+                float smoothP = smoothstep(0.0, 1.0, uProgress);
+                float easeP = 1.0 - pow(1.0 - smoothP, 4.0);
+                vec3 pos = mix(posTree, posGalaxy, easeP);
 
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
@@ -291,7 +349,6 @@
                 gl_PointSize = size;
                 
                 vec3 deepGold = vec3(50.0, 30.0, 2.0);
-                
                 vColor = deepGold * glint * vVisible;
             }
         `;
@@ -304,13 +361,10 @@
                 if (vVisible < 0.01) discard;
 
                 vec2 uv = gl_PointCoord - 0.5;
-                
                 float dist = abs(uv.x) + abs(uv.y); 
                 if (dist > 0.5) discard;
-                
                 float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-                alpha = pow(alpha, 5.0);
-
+                alpha = pow(alpha, 5.0); 
                 gl_FragColor = vec4(vColor, alpha);
             }
         `;
@@ -498,9 +552,15 @@
             composer.addPass(renderPass);
             composer.addPass(bloomPass);
 
+            // 关键：创建树的容器，用于独立旋转
+            treeGroup = new THREE.Group();
+            scene.add(treeGroup);
+
+            // 修改：传入 treeGroup 而不是 scene
             createCrystals();
             createStardust();
             createSparkles(); 
+            createSnow(); // 雪花依然加到 scene
             createRadiantStar();
             createGallery();
             
@@ -539,11 +599,13 @@
             });
 
             topperMesh.position.set(0, DESIGN.FORM.HEIGHT/2 + 3, 0);
-            scene.add(topperMesh);
+            
+            // 加到 treeGroup
+            treeGroup.add(topperMesh);
 
             const light = new THREE.PointLight(0xFFFFFF, 1.2, 30);
             light.position.set(0, DESIGN.FORM.HEIGHT/2 + 3, 0);
-            scene.add(light);
+            treeGroup.add(light);
         }
 
         function createCrystals() {
@@ -582,7 +644,9 @@
             mesh.geometry.setAttribute('aRandom', new THREE.InstancedBufferAttribute(randoms, 3));
             mesh.geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(colors, 3));
             mesh.geometry.setAttribute('aType', new THREE.InstancedBufferAttribute(types, 1));
-            scene.add(mesh);
+            
+            // 加到 treeGroup
+            treeGroup.add(mesh);
             if (!window.animatables) window.animatables = [];
             window.animatables.push(mesh);
         }
@@ -628,7 +692,9 @@
             });
             starSystem = new THREE.Points(geo, mat);
             starSystem.frustumCulled = false;
-            scene.add(starSystem);
+            
+            // 加到 treeGroup
+            treeGroup.add(starSystem);
         }
 
         function createSparkles() {
@@ -669,12 +735,54 @@
             });
             
             sparkleSystem = new THREE.Points(geo, mat);
-            scene.add(sparkleSystem);
+            
+            // 加到 treeGroup
+            treeGroup.add(sparkleSystem);
+        }
+
+        function createSnow() {
+            const count = DESIGN.COUNTS.SNOW;
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3);
+            const randoms = new Float32Array(count * 3);
+            
+            for(let i=0; i<count; i++) {
+                pos[i*3] = (Math.random() - 0.5) * 120; 
+                pos[i*3+1] = (Math.random() - 0.5) * 100; 
+                pos[i*3+2] = (Math.random() - 0.5) * 120; 
+                
+                randoms[i*3] = Math.random();
+                randoms[i*3+1] = Math.random();
+                randoms[i*3+2] = Math.random();
+            }
+            
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
+            
+            const mat = new THREE.ShaderMaterial({
+                vertexShader: snowVertexShader,
+                fragmentShader: snowFragmentShader,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) }
+                },
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            
+            snowSystem = new THREE.Points(geo, mat);
+            
+            // 关键：雪花必须加到 scene，而不是 treeGroup
+            scene.add(snowSystem);
         }
 
         function createGallery() {
             photoGroup = new THREE.Group();
-            scene.add(photoGroup);
+            
+            // 加到 treeGroup
+            treeGroup.add(photoGroup);
+            
             const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
             
             DESIGN.PHOTOS.forEach((url, i) => {
@@ -781,6 +889,10 @@
                 sparkleSystem.material.uniforms.uProgress.value = state.bloom;
                 sparkleSystem.material.uniforms.uSpeed.value = state.mouseSpeed;
             }
+            if(snowSystem) {
+                snowSystem.material.uniforms.uTime.value = time;
+                snowSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
+            }
 
             if (topperMesh) {
                 topperMesh.rotation.y = time * 0.1; 
@@ -800,9 +912,11 @@
                 camera.lookAt(0, 5, 0);
             }
 
+            // 修改：只旋转 treeGroup，不旋转 scene
+            // 这样雪花(在scene中)就不会动了
             if (Math.abs(state.rotationOffset) > 0.01) {
-                 scene.rotation.y = -state.rotationOffset;
-                 scene.updateMatrixWorld();
+                 treeGroup.rotation.y = -state.rotationOffset;
+                 treeGroup.updateMatrixWorld(); // 确保坐标转换正确
             }
 
             if (photoGroup) {
@@ -830,6 +944,10 @@
                         targetPos.copy(camera.position).add(photoDir.multiplyScalar(radius));
                         targetPos.y += yOffset;
                         
+                        // 修正：将世界坐标转换回 treeGroup 的局部坐标
+                        // 否则当 treeGroup 旋转时，照片位置会错乱
+                        treeGroup.worldToLocal(targetPos);
+                        
                         item.lookAt(camera.position); 
                     } else {
                         targetPos = data.origin.clone();
@@ -839,7 +957,10 @@
                     if (state.zoomLevel > 0.01) {
                         if (idx === state.zoomIndex) {
                             const centerPos = new THREE.Vector3().copy(camera.position).add(camDir.multiplyScalar(15));
-                            item.parent.worldToLocal(centerPos);
+                            
+                            // 同样需要转换坐标系
+                            treeGroup.worldToLocal(centerPos);
+                            
                             targetPos.copy(centerPos);
                             item.lookAt(camera.position);
                             targetScale = 2.0;
@@ -968,6 +1089,7 @@
             composer.setSize(window.innerWidth, window.innerHeight);
             if(starSystem) starSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
             if(sparkleSystem) sparkleSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
+            if(snowSystem) snowSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
         }
 
         init();
