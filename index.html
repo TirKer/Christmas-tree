@@ -1,993 +1,976 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ultimate Christmas | 终极圣诞夜</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;700&display=swap" rel="stylesheet">
-    
-    <style>
-        body { 
-            margin: 0; 
-            background-color: #000000;
-            overflow: hidden; 
-            font-family: 'Lato', sans-serif; 
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ultimate Christmas | 终极圣诞夜</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            margin: 0; 
+            background-color: #000000;
+            overflow: hidden; 
+            font-family: 'Lato', sans-serif; 
+        }
 
-        #canvas-container { width: 100vw; height: 100vh; position: absolute; z-index: 1; }
-        
-        #ui-layer {
-            position: absolute; bottom: 60px; width: 100%; text-align: center; z-index: 10; pointer-events: none;
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-        }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; z-index: 1; }
+        
+        #ui-layer {
+            position: absolute; bottom: 60px; width: 100%; text-align: center; z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
 
-        .title {
-            background: linear-gradient(to bottom, #fff, #f0d090);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-family: 'Cinzel', serif;
-            font-size: 26px; 
-            letter-spacing: 6px;
-            margin-bottom: 4px;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
-            opacity: 0; animation: fadeIn 2s ease-out 0.5s forwards;
-        }
+        .title {
+            background: linear-gradient(to bottom, #fff, #f0d090);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Cinzel', serif;
+            font-size: 26px; 
+            letter-spacing: 6px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+            opacity: 0; animation: fadeIn 2s ease-out 0.5s forwards;
+        }
 
-        .subtitle {
-            color: #D40000; 
-            font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
-            margin-bottom: 15px; opacity: 0; animation: fadeIn 2s ease-out 1s forwards;
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
+        .subtitle {
+            color: #D40000; 
+            font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
+            margin-bottom: 15px; opacity: 0; animation: fadeIn 2s ease-out 1s forwards;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
 
-        .status-pill {
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 8px 24px;
-            background: rgba(10, 5, 5, 0.8); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            border-radius: 2px; 
-            color: #888; font-size: 9px; letter-spacing: 3px;
-            text-transform: uppercase; font-weight: 700;
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        
-        .status-pill.active {
-            background: rgba(139, 0, 0, 0.4);
-            border-color: #FF2222;
-            color: #FFF;
-            box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
-        }
+        .status-pill {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 24px;
+            background: rgba(10, 5, 5, 0.8); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 2px; 
+            color: #888; font-size: 9px; letter-spacing: 3px;
+            text-transform: uppercase; font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        .status-pill.active {
+            background: rgba(139, 0, 0, 0.4);
+            border-color: #FF2222;
+            color: #FFF;
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+        }
 
-        #loading {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #443322; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 8px; 
-            transition: opacity 0.8s; pointer-events: none;
-        }
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #443322; font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 8px; 
+            transition: opacity 0.8s; pointer-events: none;
+        }
 
-        #webcam-preview {
-            position: absolute; bottom: 30px; right: 30px; width: 140px; height: 105px;
-            z-index: 20; opacity: 0; pointer-events: none; border-radius: 2px; transform: scaleX(-1);
-            border: 1px solid rgba(255, 215, 0, 0.1);
-        }
-        
-        .controls-hint {
-            position: absolute; top: 40px; right: 40px; 
-            color: rgba(255, 255, 255, 0.25); font-size: 10px; line-height: 2.2;
-            text-align: right; z-index: 10; pointer-events: none; 
-            text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
-        }
+        #webcam-preview {
+            position: absolute; bottom: 30px; right: 30px; width: 140px; height: 105px;
+            z-index: 20; opacity: 0; pointer-events: none; border-radius: 2px; transform: scaleX(-1);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+        }
+        
+        .controls-hint {
+            position: absolute; top: 40px; right: 40px; 
+            color: rgba(255, 255, 255, 0.25); font-size: 10px; line-height: 2.2;
+            text-align: right; z-index: 10; pointer-events: none; 
+            text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
+        }
 
-        @keyframes fadeIn { to { opacity: 1; } }
-    </style>
-    
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+        @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
-    <div id="loading">LIGHTING CANDLES...</div>
-    <div id="canvas-container"></div>
-    <video id="webcam-preview" playsinline></video>
-    
-    <div class="controls-hint">
-        Pinch to Remember<br>
-        Open Hand to Celebrate<br>
-        Drag to Orbit
-    </div>
-
-    <div id="ui-layer">
-        <div class="title">Silent Night</div>
-        <div class="subtitle">Magic in the Air</div>
-        <div id="status" class="status-pill">Interact with Hand</div>
-    </div>
-
-    <script>
-        const DESIGN = {
-            COUNTS: {
-                STARDUST: 48000, 
-                CRYSTALS: 4500,  
-                RIBBONS: 3500, 
-                ORBS: 1200,
-                SPARKLES: 3500 
-            },
-            FORM: {
-                HEIGHT: 72,
-                RADIUS_BASE: 32,
-                TIERS: 7.0 
-            },
-            LOOK: {
-                BLOOM_STRENGTH: 0.8, 
-                BLOOM_RADIUS: 0.6,   
-                BLOOM_THRESHOLD: 0.85, 
-                EXPOSURE: 0.95,      
-                
-                ZOOM_BLOOM: 0.2,
-                ZOOM_EXPOSURE: 1.0
-            },
-            PALETTE: {
-                PINE_GREEN: new THREE.Color('#0A3010'), 
-                PINE_LIGHT: new THREE.Color('#2E8B57'), 
-                GOLD_RIBBON: new THREE.Color('#FFD700'), 
-                RED_ORNAMENT: new THREE.Color('#E60000'), 
-                SNOW_WHITE: new THREE.Color('#FFFFFF')  
-            },
-            PHOTOS: [
-                // --- 替换照片说明 ---
-                // 1. 在你的项目文件夹里建一个叫 photos 的文件夹
-                // 2. 把你的照片放进去，重命名为 1.jpg, 2.jpg 等
-                // 3. 将下方的链接改成相对路径，例如 'photos/1.jpg'
-                // 4. 确保照片是正方形的(1:1)，否则可能会被拉伸
-                
-                'photos/1.jpg',  
-                'photos/2.jpg',  
-                'photos/3.jpg',  
-                'photos/4.jpg',  
-                'photos/5.jpg',  
-                'photos/6.jpg',  
-            ]
-        };
-
-        let scene, camera, renderer, composer, bloomPass;
-        let starSystem, photoGroup, topperMesh, sparkleSystem; 
-        let clock = new THREE.Clock();
-        const raycaster = new THREE.Raycaster();
-        
-        let state = {
-            bloom: 0, 
-            targetBloom: 0,
-            rotationOffset: 0,
-            targetRotation: 0,
-            zooming: false,
-            zoomIndex: -1,
-            zoomLevel: 0, 
-            gestureActive: false,
-            mouseSpeed: 0,      
-            lastMouseX: 0,     
-            lastMouseY: 0
-        };
-
-        const glslUtils = `
-            #define PI 3.14159265359
-            mat2 rotate2d(float a) {
-                float s = sin(a); float c = cos(a);
-                return mat2(c, -s, s, c);
-            }
-            float hash(vec3 p) {
-                p  = fract( p*0.3183099+.1 );
-                p *= 17.0;
-                return fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
-            }
-        `;
-
-        const treeMathGlsl = `
-            vec3 getTreePos(vec3 rng, float time, float type, out float normH) {
-                float slowTime = time * 0.05; 
-                float life = fract(rng.y + slowTime); 
-                float y = life * ${DESIGN.FORM.HEIGHT.toFixed(1)} - ${(DESIGN.FORM.HEIGHT/2.0).toFixed(1)};
-                float normY = life; 
-                
-                normH = normY;
-
-                float coneR = (1.0 - normY) * ${DESIGN.FORM.RADIUS_BASE.toFixed(1)};
-                float tiers = ${DESIGN.FORM.TIERS.toFixed(1)};
-                float tierWave = sin(normY * PI * tiers * 2.0) * 0.4 + 0.6; 
-                float maxRadius = coneR + tierWave * 3.5;
-                
-                float r;
-                float angle;
-                
-                if (type < 0.5) { 
-                    r = sqrt(rng.x) * maxRadius;
-                    angle = rng.z * PI * 2.0 + normY * 5.0 - time * 0.1;
-                } else { 
-                    r = maxRadius * 1.05 + sin(normY * 20.0) * 0.5; 
-                    angle = normY * PI * 8.0 - time * 0.15; 
-                    r += (rng.x - 0.5) * 2.0;
-                }
-                
-                vec3 pos;
-                pos.x = cos(angle) * r;
-                pos.y = y;
-                pos.z = sin(angle) * r;
-                
-                return pos;
-            }
-
-            vec3 applyWind(vec3 pos, float time, float randomVal) {
-                float h = smoothstep(-${(DESIGN.FORM.HEIGHT/2).toFixed(1)}, ${(DESIGN.FORM.HEIGHT/2).toFixed(1)}, pos.y);
-                float wavePhase = pos.y * 0.1 + time * 0.4; 
-                float wave = sin(wavePhase) * 1.0 * h; 
-                float flutter = sin(time * 3.0 + randomVal * 20.0) * 0.1 * h;
-                float spiral = cos(time * 0.3 + pos.y * 0.05) * 0.5 * h;
-
-                pos.x += wave + flutter + spiral;
-                pos.z += wave * 0.5 + flutter - spiral;
-                return pos;
-            }
-        `;
-
-        // ------------------ 交互式反光 Shader (纯金防白版) ------------------
-        const sparkleVertexShader = `
-            uniform float uTime;
-            uniform float uProgress; 
-            uniform float uPixelRatio;
-            uniform float uSpeed; 
-            
-            attribute vec3 aRandom; 
-            attribute vec3 aRandomNormal;
-            
-            varying float vVisible; 
-            varying vec3 vColor;
-            
-            ${glslUtils}
-            ${treeMathGlsl}
-
-            void main() {
-                float normH;
-                vec3 posTree = getTreePos(aRandom, 0.0, aRandom.x, normH);
-                
-                if (normH > 0.92) {
-                    vVisible = 0.0;
-                    gl_Position = vec4(2.0, 2.0, 2.0, 1.0); 
-                    return;
-                }
-
-                // 反螺旋随机分布
-                float radius = length(posTree.xz);
-                radius *= (0.3 + 0.7 * aRandom.y);
-                float randomAngle = aRandom.z * PI * 20.0; 
-                posTree.x = cos(randomAngle) * radius;
-                posTree.z = sin(randomAngle) * radius;
-
-                vec4 mvPosition = modelViewMatrix * vec4(posTree, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-
-                vec3 viewDir = normalize(-mvPosition.xyz);
-                
-                // 交互抖动
-                float jitterAmount = 0.01 + uSpeed * 0.2; 
-                vec3 jitter = vec3(
-                    sin(uTime * 20.0 + aRandom.x * 100.0),
-                    cos(uTime * 15.0 + aRandom.y * 100.0),
-                    sin(uTime * 25.0 + aRandom.z * 100.0)
-                ) * jitterAmount; 
-                
-                vec3 finalNormal = normalize(normalMatrix * (aRandomNormal + jitter));
-                float dotVal = max(0.0, dot(viewDir, finalNormal));
-                
-                // 物理高光
-                float glint = pow(dotVal, 300.0); 
-                if(glint < 0.001) glint = 0.0;
-                
-                float boost = 2.0 + uSpeed * 10.0; 
-                vVisible = glint * boost;
-                
-                float size = (8.0 + glint * 50.0 * (1.0 + uSpeed * 2.0)) * (300.0 / -mvPosition.z) * uPixelRatio;
-                gl_PointSize = size;
-                
-                // 关键修改：去白留金
-                // 不再混合白色，而是使用极高饱和度的金橙色。
-                // 即使亮度极高，Blue通道依然很低，防止 Tone Mapping 把颜色算成纯白。
-                // Vec3(50.0, 30.0, 2.0) -> 极亮的橙金色
-                vec3 deepGold = vec3(50.0, 30.0, 2.0);
-                
-                vColor = deepGold * glint * vVisible;
-            }
-        `;
-
-        const sparkleFragmentShader = `
-            varying float vVisible;
-            varying vec3 vColor;
-
-            void main() {
-                if (vVisible < 0.01) discard;
-
-                vec2 uv = gl_PointCoord - 0.5;
-                
-                // 菱形光斑
-                float dist = abs(uv.x) + abs(uv.y); 
-                if (dist > 0.5) discard;
-                
-                // 边缘更锐利，减少糊掉的感觉
-                float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-                alpha = pow(alpha, 5.0); // 指数提高，让边缘快速变暗，中心极锐利
-
-                gl_FragColor = vec4(vColor, alpha);
-            }
-        `;
-        // -----------------------------------------------------
-
-        const crystalVertexShader = `
-            uniform float uTime;
-            uniform float uProgress; 
-            
-            attribute vec3 aRandom; 
-            attribute vec3 aColor; 
-            attribute float aType; 
-            
-            varying vec3 vColor;
-            varying vec3 vNormal;
-            varying vec3 vViewPos;
-            
-            ${glslUtils}
-            ${treeMathGlsl}
-
-            void main() {
-                vNormal = normal;
-                float normH; 
-                vec3 posTree = getTreePos(aRandom, uTime, aType, normH);
-                
-                float windStrength = 1.0 - uProgress;
-                vec3 windPos = applyWind(posTree, uTime, aRandom.z);
-                posTree = mix(posTree, windPos, windStrength);
-
-                vec3 noiseDir = vec3(
-                    hash(aRandom * 13.0 + 1.0) - 0.5,
-                    hash(aRandom * 19.0 + 2.0) - 0.5,
-                    hash(aRandom * 23.0 + 3.0) - 0.5
-                );
-                
-                vec3 explodeDir = normalize(posTree + noiseDir * 10.0);
-                float baseDist = 50.0;
-                float randomDist = aRandom.z * 180.0; 
-                vec3 posGalaxy = explodeDir * (baseDist + randomDist);
-                float spin = length(posGalaxy.xz) * 0.01;
-                posGalaxy.xz = rotate2d(spin + uProgress * 0.5) * posGalaxy.xz; 
-
-                float smoothP = smoothstep(0.0, 1.0, uProgress);
-                float easeP = 1.0 - pow(1.0 - smoothP, 4.0);
-                vec3 pos = mix(posTree, posGalaxy, easeP);
-                
-                float heightScale = (1.0 - normH) * 0.5 + 0.3; 
-                float baseScale = (aType > 0.5) ? 0.7 : 1.0;
-                
-                vec3 transformed = position * (0.3 + aRandom.z * 0.4) * baseScale * heightScale;
-                
-                float selfSpin = uTime * 0.5 + aRandom.x * 100.0;
-                transformed.xz = rotate2d(selfSpin) * transformed.xz;
-                transformed.yz = rotate2d(selfSpin * 0.5) * transformed.yz;
-
-                vec4 mvPosition = modelViewMatrix * vec4(pos + transformed, 1.0);
-                vViewPos = -mvPosition.xyz;
-                gl_Position = projectionMatrix * mvPosition;
-                
-                float densityDim = 1.0 - normH * 0.6; 
-                vColor = aColor * densityDim;
-            }
-        `;
-
-        const crystalFragmentShader = `
-            varying vec3 vColor;
-            varying vec3 vNormal;
-            varying vec3 vViewPos;
-
-            void main() {
-                vec3 N = normalize(vNormal);
-                vec3 V = normalize(vViewPos);
-                vec3 L = normalize(vec3(0.5, 1.0, 1.0)); 
-                
-                float fresnel = pow(1.0 - abs(dot(V, N)), 3.0);
-                float spec = pow(max(dot(N, normalize(L + V)), 0.0), 32.0);
-                
-                // 恢复树原本的明亮质感
-                vec3 base = vColor * 0.5; 
-                vec3 rim = vColor * fresnel * 1.2;
-                vec3 highlight = vec3(1.0, 1.0, 0.9) * spec * 2.5; 
-
-                if(vColor.r > 0.8 && vColor.g < 0.2) {
-                    base *= 1.5;
-                    rim *= 1.5;
-                }
-                
-                vec3 finalColor = base + rim + highlight;
-                gl_FragColor = vec4(finalColor, 1.0);
-            }
-        `;
-
-        const stardustVertexShader = `
-            uniform float uTime;
-            uniform float uProgress; 
-            uniform float uPixelRatio;
-            
-            attribute vec3 aRandom; 
-            attribute vec3 aColor;
-            attribute float aType;
-            
-            varying vec3 vColor;
-            varying float vAlpha;
-            
-            ${glslUtils}
-            ${treeMathGlsl}
-
-            void main() {
-                float normH;
-                vec3 posTree = getTreePos(aRandom, uTime, aType, normH);
-                
-                float windStrength = 1.0 - uProgress;
-                vec3 windPos = applyWind(posTree, uTime, aRandom.z);
-                posTree = mix(posTree, windPos, windStrength);
-
-                float spread = (aType > 0.5) ? 0.8 : 2.0;
-                posTree += (aRandom - 0.5) * spread;
-                
-                vec3 noiseDir = vec3(
-                    hash(aRandom * 11.0) - 0.5,
-                    hash(aRandom * 17.0) - 0.5,
-                    hash(aRandom * 29.0) - 0.5
-                );
-                
-                vec3 explodeDir = normalize(posTree + noiseDir * 15.0);
-                float dist = 40.0 + aRandom.z * 180.0 + aRandom.y * 50.0;
-                vec3 posGalaxy = explodeDir * dist;
-                posGalaxy.y += sin(uTime * 0.5 + aRandom.x * 10.0) * 5.0;
-                
-                float smoothP = smoothstep(0.0, 1.0, uProgress);
-                float easeP = 1.0 - pow(1.0 - smoothP, 4.0);
-                vec3 pos = mix(posTree, posGalaxy, easeP);
-                
-                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                gl_Position = projectionMatrix * mvPosition;
-
-                float blink = sin(uTime * 1.5 + aRandom.z * 50.0) * 0.5 + 0.5; 
-                float sizeBase = (aType > 0.5) ? 2.5 : ((aRandom.x > 0.95) ? 4.0 : 1.5); 
-                float heightAtten = 1.0 - normH * 0.5; 
-                
-                gl_PointSize = (sizeBase + blink * 1.5) * heightAtten * (350.0 / -mvPosition.z) * uPixelRatio;
-                
-                vColor = aColor; 
-                vAlpha = ((aType > 0.5) ? 0.9 : (0.6 + blink * 0.4)) * (1.0 - normH * 0.4);
-            }
-        `;
-
-        const stardustFragmentShader = `
-            varying vec3 vColor;
-            varying float vAlpha;
-            
-            void main() {
-                vec2 uv = gl_PointCoord - 0.5;
-                float d = length(uv);
-                if (d > 0.5) discard;
-                float glow = 1.0 - d * 2.0;
-                glow = pow(glow, 2.0);
-                gl_FragColor = vec4(vColor, vAlpha * glow);
-            }
-        `;
-
-        function init() {
-            const container = document.getElementById('canvas-container');
-
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x000000); 
-            scene.fog = new THREE.FogExp2(0x000000, 0.002);
-
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 10, 120);
-
-            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = DESIGN.LOOK.EXPOSURE;
-            container.appendChild(renderer.domElement);
-
-            const renderPass = new THREE.RenderPass(scene, camera);
-            bloomPass = new THREE.UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                DESIGN.LOOK.BLOOM_STRENGTH,
-                DESIGN.LOOK.BLOOM_RADIUS,
-                DESIGN.LOOK.BLOOM_THRESHOLD
-            );
-            composer = new THREE.EffectComposer(renderer);
-            composer.addPass(renderPass);
-            composer.addPass(bloomPass);
-
-            createCrystals();
-            createStardust();
-            createSparkles(); 
-            createRadiantStar();
-            createGallery();
-            
-            setupInteractions();
-            setTimeout(() => initVisionAI(), 1200);
-
-            document.getElementById('loading').style.opacity = 0;
-            updateStatus("MERRY CHRISTMAS");
-
-            animate();
-            window.addEventListener('resize', onResize, false);
-        }
-
-        function createRadiantStar() {
-            topperMesh = new THREE.Group();
-            const mat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-            
-            const core = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2, 0), mat);
-            topperMesh.add(core);
-
-            const spikeGeo = new THREE.ConeGeometry(0.3, 4, 4);
-            const directions = [
-                new THREE.Vector3(1, 1, 1), new THREE.Vector3(-1, 1, 1), 
-                new THREE.Vector3(1, -1, 1), new THREE.Vector3(-1, -1, 1),
-                new THREE.Vector3(1, 1, -1), new THREE.Vector3(-1, 1, -1),
-                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0),
-                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1),
-            ];
-
-            directions.forEach(dir => {
-                const spike = new THREE.Mesh(spikeGeo, mat);
-                spike.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-                spike.position.copy(dir.multiplyScalar(1.2)); 
-                topperMesh.add(spike);
-            });
-
-            topperMesh.position.set(0, DESIGN.FORM.HEIGHT/2 + 3, 0);
-            scene.add(topperMesh);
-
-            const light = new THREE.PointLight(0xFFFFFF, 1.2, 30);
-            light.position.set(0, DESIGN.FORM.HEIGHT/2 + 3, 0);
-            scene.add(light);
-        }
-
-        function createCrystals() {
-            const geo = new THREE.OctahedronGeometry(0.35, 0);
-            const mat = new THREE.ShaderMaterial({
-                vertexShader: crystalVertexShader, fragmentShader: crystalFragmentShader,
-                uniforms: { uTime: { value: 0 }, uProgress: { value: 0 } },
-            });
-            
-            const count = DESIGN.COUNTS.CRYSTALS + DESIGN.COUNTS.ORBS;
-            const mesh = new THREE.InstancedMesh(geo, mat, count);
-            
-            const randoms = new Float32Array(count * 3);
-            const colors = new Float32Array(count * 3);
-            const types = new Float32Array(count);
-            
-            for (let i = 0; i < count; i++) {
-                randoms[i*3] = Math.random(); 
-                randoms[i*3+1] = Math.random(); 
-                randoms[i*3+2] = Math.random();
-                
-                types[i] = 0.0; 
-
-                let c;
-                if (Math.random() > 0.85) { 
-                    c = DESIGN.PALETTE.RED_ORNAMENT;
-                    randoms[i*3+2] += 0.8; 
-                } else if (Math.random() > 0.7) {
-                    c = DESIGN.PALETTE.GOLD_RIBBON; 
-                } else {
-                    c = (Math.random() > 0.4) ? DESIGN.PALETTE.PINE_GREEN : DESIGN.PALETTE.PINE_LIGHT;
-                }
-                
-                colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
-            }
-            mesh.geometry.setAttribute('aRandom', new THREE.InstancedBufferAttribute(randoms, 3));
-            mesh.geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(colors, 3));
-            mesh.geometry.setAttribute('aType', new THREE.InstancedBufferAttribute(types, 1));
-            scene.add(mesh);
-            if (!window.animatables) window.animatables = [];
-            window.animatables.push(mesh);
-        }
-
-        function createStardust() {
-            const geo = new THREE.BufferGeometry();
-            const count = DESIGN.COUNTS.STARDUST + DESIGN.COUNTS.RIBBONS;
-            const pos = new Float32Array(count * 3);
-            const randoms = new Float32Array(count * 3);
-            const colors = new Float32Array(count * 3);
-            const types = new Float32Array(count);
-            
-            for(let i=0; i<count; i++) {
-                randoms[i*3] = Math.random(); 
-                randoms[i*3+1] = Math.random(); 
-                randoms[i*3+2] = Math.random();
-                
-                let isRibbon = i >= DESIGN.COUNTS.STARDUST;
-                types[i] = isRibbon ? 1.0 : 0.0;
-                
-                let c;
-                if (isRibbon) {
-                    c = DESIGN.PALETTE.GOLD_RIBBON;
-                } else {
-                    let r = Math.random();
-                    if (r > 0.95) c = DESIGN.PALETTE.RED_ORNAMENT; 
-                    else if (r > 0.85) c = DESIGN.PALETTE.SNOW_WHITE; 
-                    else if (r > 0.7) c = DESIGN.PALETTE.GOLD_RIBBON; 
-                    else c = DESIGN.PALETTE.PINE_GREEN;
-                }
-                
-                colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
-            }
-            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
-            geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
-            geo.setAttribute('aType', new THREE.BufferAttribute(types, 1));
-            
-            const mat = new THREE.ShaderMaterial({
-                vertexShader: stardustVertexShader, fragmentShader: stardustFragmentShader,
-                uniforms: { uTime: { value: 0 }, uProgress: { value: 0 }, uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) } },
-                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-            });
-            starSystem = new THREE.Points(geo, mat);
-            starSystem.frustumCulled = false;
-            scene.add(starSystem);
-        }
-
-        function createSparkles() {
-            const count = DESIGN.COUNTS.SPARKLES;
-            const geo = new THREE.BufferGeometry();
-            const pos = new Float32Array(count * 3); 
-            const randoms = new Float32Array(count * 3);
-            const normals = new Float32Array(count * 3);
-            
-            for(let i=0; i<count; i++) {
-                randoms[i*3] = Math.random();
-                randoms[i*3+1] = Math.random();
-                randoms[i*3+2] = Math.random();
-                
-                const rTheta = Math.random() * Math.PI * 2;
-                const rPhi = Math.acos(2 * Math.random() - 1);
-                normals[i*3] = Math.sin(rPhi) * Math.cos(rTheta);
-                normals[i*3+1] = Math.sin(rPhi) * Math.sin(rTheta);
-                normals[i*3+2] = Math.cos(rPhi);
-            }
-            
-            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
-            geo.setAttribute('aRandomNormal', new THREE.BufferAttribute(normals, 3));
-            
-            const mat = new THREE.ShaderMaterial({
-                vertexShader: sparkleVertexShader,
-                fragmentShader: sparkleFragmentShader,
-                uniforms: { 
-                    uTime: { value: 0 },
-                    uProgress: { value: 0 },
-                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
-                    uSpeed: { value: 0 } 
-                },
-                transparent: true,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending
-            });
-            
-            sparkleSystem = new THREE.Points(geo, mat);
-            scene.add(sparkleSystem);
-        }
-
-        function createGallery() {
-            photoGroup = new THREE.Group();
-            scene.add(photoGroup);
-            const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
-            
-            DESIGN.PHOTOS.forEach((url, i) => {
-                const holder = new THREE.Group();
-                const border = new THREE.Mesh(
-                    new THREE.BoxGeometry(6.1, 7.6, 0.05),
-                    new THREE.MeshBasicMaterial({ color: 0xD4AF37 }) 
-                );
-                const photo = new THREE.Mesh(
-                    new THREE.PlaneGeometry(6, 6),
-                    new THREE.MeshBasicMaterial({ color: 0x000000 })
-                );
-                photo.position.set(0, 0.5, 0.04);
-                
-                holder.add(border); holder.add(photo);
-                
-                loader.load(url, (tex) => { 
-                    photo.material.map = tex; 
-                    photo.material.color.setHex(0xffffff);
-                    photo.material.needsUpdate = true; 
-                });
-
-                const angle = (i / DESIGN.PHOTOS.length) * Math.PI * 2;
-                const r = 38; 
-                const y = (Math.random() - 0.5) * 50;
-                holder.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
-                holder.lookAt(0, y, 0); holder.rotateY(Math.PI);
-                
-                holder.userData = { 
-                    origin: holder.position.clone(), 
-                    rot: holder.rotation.clone()
-                };
-                photoGroup.add(holder);
-            });
-        }
-
-        function getFocusedPhotoIndex(mouseNDC) {
-            if (!photoGroup) return 0;
-
-            if (mouseNDC) {
-                raycaster.setFromCamera(mouseNDC, camera);
-                const intersects = raycaster.intersectObjects(photoGroup.children, true);
-                if (intersects.length > 0) {
-                    let target = intersects[0].object;
-                    while(target.parent && target.parent !== photoGroup) {
-                        target = target.parent;
-                    }
-                    return photoGroup.children.indexOf(target);
-                }
-            }
-
-            let minDist = Infinity;
-            let bestIndex = 0;
-            const targetNDC = mouseNDC || new THREE.Vector2(0, 0);
-
-            photoGroup.children.forEach((item, index) => {
-                const worldPos = new THREE.Vector3();
-                item.getWorldPosition(worldPos);
-                const screenPos = worldPos.clone().project(camera);
-                
-                if (screenPos.z < 1 && screenPos.z > -1) {
-                     const dist = new THREE.Vector2(screenPos.x, screenPos.y).distanceTo(targetNDC);
-                     if (dist < minDist) {
-                         minDist = dist;
-                         bestIndex = index;
-                     }
-                }
-            });
-            return bestIndex;
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
-            
-            // 速度自然衰减
-            state.mouseSpeed *= 0.92;
-            if(state.mouseSpeed < 0.001) state.mouseSpeed = 0;
-            
-            state.bloom += (state.targetBloom - state.bloom) * 0.05;
-            
-            if (!state.zooming) {
-                 state.rotationOffset += (state.targetRotation - state.rotationOffset) * 0.05;
-            }
-            
-            const targetZ = state.zooming ? 1 : 0;
-            state.zoomLevel += (targetZ - state.zoomLevel) * 0.08; 
-
-            const currentExposure = THREE.MathUtils.lerp(DESIGN.LOOK.EXPOSURE, DESIGN.LOOK.ZOOM_EXPOSURE, state.zoomLevel);
-            const currentBloomStr = THREE.MathUtils.lerp(DESIGN.LOOK.BLOOM_STRENGTH, DESIGN.LOOK.ZOOM_BLOOM, state.zoomLevel);
-            
-            renderer.toneMappingExposure = currentExposure;
-            bloomPass.strength = currentBloomStr;
-
-            if(window.animatables) window.animatables.forEach(m => {
-                m.material.uniforms.uTime.value = time;
-                m.material.uniforms.uProgress.value = state.bloom;
-            });
-            if(starSystem) {
-                starSystem.material.uniforms.uTime.value = time;
-                starSystem.material.uniforms.uProgress.value = state.bloom;
-            }
-            if(sparkleSystem) {
-                sparkleSystem.material.uniforms.uTime.value = time;
-                sparkleSystem.material.uniforms.uProgress.value = state.bloom;
-                sparkleSystem.material.uniforms.uSpeed.value = state.mouseSpeed;
-            }
-
-            if (topperMesh) {
-                topperMesh.rotation.y = time * 0.1; 
-                topperMesh.rotation.z = Math.sin(time * 0.8) * 0.05; 
-                topperMesh.scale.setScalar(1.0 + Math.sin(time * 2.0) * 0.05); 
-                
-                if (state.bloom > 0.1) {
-                    topperMesh.position.y = DESIGN.FORM.HEIGHT/2 + 3 + state.bloom * 25;
-                } else {
-                    topperMesh.position.y = DESIGN.FORM.HEIGHT/2 + 3;
-                }
-            }
-
-            if (state.bloom < 0.5 && !state.zooming) {
-                camera.position.x = Math.sin(time * 0.03) * 120;
-                camera.position.z = Math.cos(time * 0.03) * 120;
-                camera.lookAt(0, 5, 0);
-            }
-
-            if (Math.abs(state.rotationOffset) > 0.01) {
-                 scene.rotation.y = -state.rotationOffset;
-                 scene.updateMatrixWorld();
-            }
-
-            if (photoGroup) {
-                const camDir = new THREE.Vector3(); 
-                camera.getWorldDirection(camDir);
-                const camRight = new THREE.Vector3().crossVectors(camDir, camera.up).normalize();
-                const camUp = new THREE.Vector3().crossVectors(camRight, camDir).normalize();
-
-                photoGroup.children.forEach((item, idx) => {
-                    const data = item.userData;
-                    let targetPos = new THREE.Vector3();
-                    let targetScale = 1.0;
-
-                    if (state.bloom > 0.01) {
-                        const radius = 55; 
-                        const spreadAngle = Math.PI / 1.5; 
-                        
-                        const count = DESIGN.PHOTOS.length;
-                        const angleStep = spreadAngle / (count - 1 || 1);
-                        const angleOffset = (idx - (count - 1) / 2) * angleStep;
-                        
-                        const photoDir = camDir.clone().applyAxisAngle(camUp, -angleOffset);
-                        
-                        const yOffset = Math.sin(idx * 2 + time) * 3.0;
-                        targetPos.copy(camera.position).add(photoDir.multiplyScalar(radius));
-                        targetPos.y += yOffset;
-                        
-                        item.lookAt(camera.position); 
-                    } else {
-                        targetPos = data.origin.clone();
-                        item.rotation.y += 0.005; 
-                    }
-
-                    if (state.zoomLevel > 0.01) {
-                        if (idx === state.zoomIndex) {
-                            const centerPos = new THREE.Vector3().copy(camera.position).add(camDir.multiplyScalar(15));
-                            item.parent.worldToLocal(centerPos);
-                            targetPos.copy(centerPos);
-                            item.lookAt(camera.position);
-                            targetScale = 2.0;
-                        } else {
-                            targetScale = (state.bloom > 0.01) ? 0.5 : 0.0;
-                        }
-                    }
-
-                    item.position.lerp(targetPos, 0.1);
-                    const s = 1.0 + (targetScale - 1.0) * state.zoomLevel;
-                    item.scale.setScalar(s);
-                });
-            }
-            
-            composer.render();
-        }
-
-        function setupInteractions() {
-            const onDown = (e) => {
-                if (e.button === 0) {
-                    state.targetBloom = 1;
-                    updateStatus("CELEBRATING");
-                } else if (e.button === 2) {
-                    e.preventDefault();
-                    
-                    const mouse = new THREE.Vector2();
-                    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-                    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-                    state.zoomIndex = getFocusedPhotoIndex(mouse);
-                    
-                    state.zooming = true;
-                    updateStatus("MEMORIES");
-                }
-            };
-            const onUp = (e) => {
-                if (e.button === 0) {
-                    state.targetBloom = 0;
-                    updateStatus("GATHERING");
-                } else if (e.button === 2) {
-                    state.zooming = false;
-                    updateStatus("CELEBRATING");
-                }
-            };
-            
-            // 计算鼠标移动速度
-            const onMove = (e) => {
-                const nx = (e.clientX / window.innerWidth) * 2 - 1; 
-                state.targetRotation = nx * 1.0; 
-                
-                // 计算速度 delta，增加一点点权重让闪光更灵敏
-                const dist = Math.hypot(e.clientX - state.lastMouseX, e.clientY - state.lastMouseY);
-                state.mouseSpeed += dist * 0.003; 
-                if(state.mouseSpeed > 1.0) state.mouseSpeed = 1.0;
-                
-                state.lastMouseX = e.clientX;
-                state.lastMouseY = e.clientY;
-            };
-
-            document.addEventListener('mousedown', onDown);
-            document.addEventListener('mouseup', onUp);
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            document.addEventListener('touchstart', (e) => { state.targetBloom = 1; }, {passive: false});
-            document.addEventListener('touchend', (e) => { state.targetBloom = 0; });
-        }
-
-        function initVisionAI() {
-            const videoElement = document.getElementById('webcam-preview');
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-            try {
-                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`});
-                hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
-                hands.onResults(results => {
-                    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                        state.gestureActive = true;
-                        const lm = results.multiHandLandmarks[0];
-                        const palmX = lm[9].x; 
-                        
-                        const handMove = Math.abs(state.targetRotation - (0.5 - palmX) * 3.0);
-                        state.mouseSpeed += handMove * 0.5;
-                        if(state.mouseSpeed > 1.0) state.mouseSpeed = 1.0;
-                        
-                        state.targetRotation = (0.5 - palmX) * 3.0; 
-                        
-                        const pinchDist = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
-                        
-                        if (pinchDist < 0.05) {
-                             if (!state.zooming) {
-                                state.zoomIndex = getFocusedPhotoIndex(null); 
-                                state.zooming = true;
-                                updateStatus("LOCKED MEMORY");
-                             }
-                        } else {
-                             state.zooming = false;
-                             const isFist = lm[8].y > lm[5].y; 
-                             if (isFist) {
-                                 state.targetBloom = 0;
-                                 updateStatus("HOLDING");
-                             } else {
-                                 state.targetBloom = 1;
-                                 updateStatus("RELEASING");
-                             }
-                        }
-                    } else {
-                        state.gestureActive = false;
-                    }
-                });
-                const camera = new Camera(videoElement, {
-                    onFrame: async () => { if (videoElement.readyState>=2) await hands.send({image: videoElement}).catch(()=>{}); },
-                    width: 320, height: 240
-                });
-                camera.start().catch(()=>{});
-            } catch(e) {}
-        }
-
-        function updateStatus(msg) {
-            const el = document.getElementById('status');
-            el.innerText = msg;
-            if (msg.includes("Interact")) el.classList.remove('active');
-            else el.classList.add('active');
-        }
-
-        function onResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-            if(starSystem) starSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
-            if(sparkleSystem) sparkleSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
-        }
-
-        init();
-    </script>
+    <div id="loading">LIGHTING CANDLES...</div>
+    <div id="canvas-container"></div>
+    <video id="webcam-preview" playsinline></video>
+    
+    <div class="controls-hint">
+        Pinch to Remember<br>
+        Open Hand to Celebrate<br>
+        Drag to Orbit
+    </div>
+
+    <div id="ui-layer">
+        <div class="title">Silent Night</div>
+        <div class="subtitle">Magic in the Air</div>
+        <div id="status" class="status-pill">Interact with Hand</div>
+    </div>
+
+    <script>
+        const DESIGN = {
+            COUNTS: {
+                STARDUST: 48000, 
+                CRYSTALS: 4500,  
+                RIBBONS: 3500, 
+                ORBS: 1200,
+                SPARKLES: 3500 
+            },
+            FORM: {
+                HEIGHT: 72,
+                RADIUS_BASE: 32,
+                TIERS: 7.0 
+            },
+            LOOK: {
+                BLOOM_STRENGTH: 0.8, 
+                BLOOM_RADIUS: 0.6,   
+                BLOOM_THRESHOLD: 0.85, // 保持高阈值，分离闪光和树身
+                EXPOSURE: 0.95,      
+                
+                ZOOM_BLOOM: 0.2,
+                ZOOM_EXPOSURE: 1.0
+            },
+            PALETTE: {
+                PINE_GREEN: new THREE.Color('#0A3010'), 
+                PINE_LIGHT: new THREE.Color('#2E8B57'), 
+                GOLD_RIBBON: new THREE.Color('#FFD700'), 
+                RED_ORNAMENT: new THREE.Color('#E60000'), 
+                SNOW_WHITE: new THREE.Color('#FFFFFF')  
+            },
+            PHOTOS: [
+                // 记得这里要改成你自己的 photos/1.jpg 等路径
+                'https://picsum.photos/id/1027/600/600', 
+                'https://picsum.photos/id/164/600/600',  
+                'https://picsum.photos/id/237/600/600',  
+                'https://picsum.photos/id/338/600/600',  
+                'https://picsum.photos/id/1011/600/600', 
+            ]
+        };
+
+        let scene, camera, renderer, composer, bloomPass;
+        let starSystem, photoGroup, topperMesh, sparkleSystem; 
+        let clock = new THREE.Clock();
+        const raycaster = new THREE.Raycaster();
+        
+        let state = {
+            bloom: 0, 
+            targetBloom: 0,
+            rotationOffset: 0,
+            targetRotation: 0,
+            zooming: false,
+            zoomIndex: -1,
+            zoomLevel: 0, 
+            gestureActive: false,
+            mouseSpeed: 0,      
+            lastMouseX: 0,     
+            lastMouseY: 0
+        };
+
+        const glslUtils = `
+            #define PI 3.14159265359
+            mat2 rotate2d(float a) {
+                float s = sin(a); float c = cos(a);
+                return mat2(c, -s, s, c);
+            }
+            float hash(vec3 p) {
+                p  = fract( p*0.3183099+.1 );
+                p *= 17.0;
+                return fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
+            }
+        `;
+
+        const treeMathGlsl = `
+            vec3 getTreePos(vec3 rng, float time, float type, out float normH) {
+                float slowTime = time * 0.05; 
+                float life = fract(rng.y + slowTime); 
+                float y = life * ${DESIGN.FORM.HEIGHT.toFixed(1)} - ${(DESIGN.FORM.HEIGHT/2.0).toFixed(1)};
+                float normY = life; 
+                
+                normH = normY;
+
+                float coneR = (1.0 - normY) * ${DESIGN.FORM.RADIUS_BASE.toFixed(1)};
+                float tiers = ${DESIGN.FORM.TIERS.toFixed(1)};
+                float tierWave = sin(normY * PI * tiers * 2.0) * 0.4 + 0.6; 
+                float maxRadius = coneR + tierWave * 3.5;
+                
+                float r;
+                float angle;
+                
+                if (type < 0.5) { 
+                    r = sqrt(rng.x) * maxRadius;
+                    angle = rng.z * PI * 2.0 + normY * 5.0 - time * 0.1;
+                } else { 
+                    r = maxRadius * 1.05 + sin(normY * 20.0) * 0.5; 
+                    angle = normY * PI * 8.0 - time * 0.15; 
+                    r += (rng.x - 0.5) * 2.0;
+                }
+                
+                vec3 pos;
+                pos.x = cos(angle) * r;
+                pos.y = y;
+                pos.z = sin(angle) * r;
+                
+                return pos;
+            }
+
+            vec3 applyWind(vec3 pos, float time, float randomVal) {
+                float h = smoothstep(-${(DESIGN.FORM.HEIGHT/2).toFixed(1)}, ${(DESIGN.FORM.HEIGHT/2).toFixed(1)}, pos.y);
+                float wavePhase = pos.y * 0.1 + time * 0.4; 
+                float wave = sin(wavePhase) * 1.0 * h; 
+                float flutter = sin(time * 3.0 + randomVal * 20.0) * 0.1 * h;
+                float spiral = cos(time * 0.3 + pos.y * 0.05) * 0.5 * h;
+
+                pos.x += wave + flutter + spiral;
+                pos.z += wave * 0.5 + flutter - spiral;
+                return pos;
+            }
+        `;
+
+        // 修复：移除所有中文注释，防止编译错误
+        const sparkleVertexShader = `
+            uniform float uTime;
+            uniform float uProgress; 
+            uniform float uPixelRatio;
+            uniform float uSpeed; 
+            
+            attribute vec3 aRandom; 
+            attribute vec3 aRandomNormal;
+            
+            varying float vVisible; 
+            varying vec3 vColor;
+            
+            ${glslUtils}
+            ${treeMathGlsl}
+
+            void main() {
+                float normH;
+                vec3 posTree = getTreePos(aRandom, 0.0, aRandom.x, normH);
+                
+                if (normH > 0.92) {
+                    vVisible = 0.0;
+                    gl_Position = vec4(2.0, 2.0, 2.0, 1.0); 
+                    return;
+                }
+
+                float radius = length(posTree.xz);
+                radius *= (0.3 + 0.7 * aRandom.y);
+                
+                float randomAngle = aRandom.z * PI * 20.0; 
+                posTree.x = cos(randomAngle) * radius;
+                posTree.z = sin(randomAngle) * radius;
+
+                vec3 pos = posTree; 
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+
+                vec3 viewDir = normalize(-mvPosition.xyz);
+                
+                float jitterAmount = 0.01 + uSpeed * 0.2; 
+                vec3 jitter = vec3(
+                    sin(uTime * 20.0 + aRandom.x * 100.0),
+                    cos(uTime * 15.0 + aRandom.y * 100.0),
+                    sin(uTime * 25.0 + aRandom.z * 100.0)
+                ) * jitterAmount; 
+                
+                vec3 finalNormal = normalize(normalMatrix * (aRandomNormal + jitter));
+                float dotVal = max(0.0, dot(viewDir, finalNormal));
+                
+                float glint = pow(dotVal, 300.0); 
+                if(glint < 0.001) glint = 0.0;
+                
+                float boost = 2.0 + uSpeed * 10.0; 
+                vVisible = glint * boost;
+                
+                float size = (8.0 + glint * 50.0 * (1.0 + uSpeed * 2.0)) * (300.0 / -mvPosition.z) * uPixelRatio;
+                gl_PointSize = size;
+                
+                vec3 deepGold = vec3(50.0, 30.0, 2.0);
+                
+                vColor = deepGold * glint * vVisible;
+            }
+        `;
+
+        const sparkleFragmentShader = `
+            varying float vVisible;
+            varying vec3 vColor;
+
+            void main() {
+                if (vVisible < 0.01) discard;
+
+                vec2 uv = gl_PointCoord - 0.5;
+                
+                float dist = abs(uv.x) + abs(uv.y); 
+                if (dist > 0.5) discard;
+                
+                float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                alpha = pow(alpha, 5.0);
+
+                gl_FragColor = vec4(vColor, alpha);
+            }
+        `;
+
+        const crystalVertexShader = `
+            uniform float uTime;
+            uniform float uProgress; 
+            
+            attribute vec3 aRandom; 
+            attribute vec3 aColor; 
+            attribute float aType; 
+            
+            varying vec3 vColor;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+            
+            ${glslUtils}
+            ${treeMathGlsl}
+
+            void main() {
+                vNormal = normal;
+                float normH; 
+                vec3 posTree = getTreePos(aRandom, uTime, aType, normH);
+                
+                float windStrength = 1.0 - uProgress;
+                vec3 windPos = applyWind(posTree, uTime, aRandom.z);
+                posTree = mix(posTree, windPos, windStrength);
+
+                vec3 noiseDir = vec3(
+                    hash(aRandom * 13.0 + 1.0) - 0.5,
+                    hash(aRandom * 19.0 + 2.0) - 0.5,
+                    hash(aRandom * 23.0 + 3.0) - 0.5
+                );
+                
+                vec3 explodeDir = normalize(posTree + noiseDir * 10.0);
+                float baseDist = 50.0;
+                float randomDist = aRandom.z * 180.0; 
+                vec3 posGalaxy = explodeDir * (baseDist + randomDist);
+                float spin = length(posGalaxy.xz) * 0.01;
+                posGalaxy.xz = rotate2d(spin + uProgress * 0.5) * posGalaxy.xz; 
+
+                float smoothP = smoothstep(0.0, 1.0, uProgress);
+                float easeP = 1.0 - pow(1.0 - smoothP, 4.0);
+                vec3 pos = mix(posTree, posGalaxy, easeP);
+                
+                float heightScale = (1.0 - normH) * 0.5 + 0.3; 
+                float baseScale = (aType > 0.5) ? 0.7 : 1.0;
+                
+                vec3 transformed = position * (0.3 + aRandom.z * 0.4) * baseScale * heightScale;
+                
+                float selfSpin = uTime * 0.5 + aRandom.x * 100.0;
+                transformed.xz = rotate2d(selfSpin) * transformed.xz;
+                transformed.yz = rotate2d(selfSpin * 0.5) * transformed.yz;
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos + transformed, 1.0);
+                vViewPos = -mvPosition.xyz;
+                gl_Position = projectionMatrix * mvPosition;
+                
+                float densityDim = 1.0 - normH * 0.6; 
+                vColor = aColor * densityDim;
+            }
+        `;
+
+        const crystalFragmentShader = `
+            varying vec3 vColor;
+            varying vec3 vNormal;
+            varying vec3 vViewPos;
+
+            void main() {
+                vec3 N = normalize(vNormal);
+                vec3 V = normalize(vViewPos);
+                vec3 L = normalize(vec3(0.5, 1.0, 1.0)); 
+                
+                float fresnel = pow(1.0 - abs(dot(V, N)), 3.0);
+                float spec = pow(max(dot(N, normalize(L + V)), 0.0), 32.0);
+                
+                vec3 base = vColor * 0.5; 
+                vec3 rim = vColor * fresnel * 1.2;
+                vec3 highlight = vec3(1.0, 1.0, 0.9) * spec * 2.5; 
+
+                if(vColor.r > 0.8 && vColor.g < 0.2) {
+                    base *= 1.5;
+                    rim *= 1.5;
+                }
+                
+                vec3 finalColor = base + rim + highlight;
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+
+        const stardustVertexShader = `
+            uniform float uTime;
+            uniform float uProgress; 
+            uniform float uPixelRatio;
+            
+            attribute vec3 aRandom; 
+            attribute vec3 aColor;
+            attribute float aType;
+            
+            varying vec3 vColor;
+            varying float vAlpha;
+            
+            ${glslUtils}
+            ${treeMathGlsl}
+
+            void main() {
+                float normH;
+                vec3 posTree = getTreePos(aRandom, uTime, aType, normH);
+                
+                float windStrength = 1.0 - uProgress;
+                vec3 windPos = applyWind(posTree, uTime, aRandom.z);
+                posTree = mix(posTree, windPos, windStrength);
+
+                float spread = (aType > 0.5) ? 0.8 : 2.0;
+                posTree += (aRandom - 0.5) * spread;
+                
+                vec3 noiseDir = vec3(
+                    hash(aRandom * 11.0) - 0.5,
+                    hash(aRandom * 17.0) - 0.5,
+                    hash(aRandom * 29.0) - 0.5
+                );
+                
+                vec3 explodeDir = normalize(posTree + noiseDir * 15.0);
+                float dist = 40.0 + aRandom.z * 180.0 + aRandom.y * 50.0;
+                vec3 posGalaxy = explodeDir * dist;
+                posGalaxy.y += sin(uTime * 0.5 + aRandom.x * 10.0) * 5.0;
+                
+                float smoothP = smoothstep(0.0, 1.0, uProgress);
+                float easeP = 1.0 - pow(1.0 - smoothP, 4.0);
+                vec3 pos = mix(posTree, posGalaxy, easeP);
+                
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+
+                float blink = sin(uTime * 1.5 + aRandom.z * 50.0) * 0.5 + 0.5; 
+                float sizeBase = (aType > 0.5) ? 2.5 : ((aRandom.x > 0.95) ? 4.0 : 1.5); 
+                float heightAtten = 1.0 - normH * 0.5; 
+                
+                gl_PointSize = (sizeBase + blink * 1.5) * heightAtten * (350.0 / -mvPosition.z) * uPixelRatio;
+                
+                vColor = aColor; 
+                vAlpha = ((aType > 0.5) ? 0.9 : (0.6 + blink * 0.4)) * (1.0 - normH * 0.4);
+            }
+        `;
+
+        const stardustFragmentShader = `
+            varying vec3 vColor;
+            varying float vAlpha;
+            
+            void main() {
+                vec2 uv = gl_PointCoord - 0.5;
+                float d = length(uv);
+                if (d > 0.5) discard;
+                float glow = 1.0 - d * 2.0;
+                glow = pow(glow, 2.0);
+                gl_FragColor = vec4(vColor, vAlpha * glow);
+            }
+        `;
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000); 
+            scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 120);
+
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = DESIGN.LOOK.EXPOSURE;
+            container.appendChild(renderer.domElement);
+
+            const renderPass = new THREE.RenderPass(scene, camera);
+            bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                DESIGN.LOOK.BLOOM_STRENGTH,
+                DESIGN.LOOK.BLOOM_RADIUS,
+                DESIGN.LOOK.BLOOM_THRESHOLD
+            );
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderPass);
+            composer.addPass(bloomPass);
+
+            createCrystals();
+            createStardust();
+            createSparkles(); 
+            createRadiantStar();
+            createGallery();
+            
+            setupInteractions();
+            setTimeout(() => initVisionAI(), 1200);
+
+            document.getElementById('loading').style.opacity = 0;
+            updateStatus("MERRY CHRISTMAS");
+
+            animate();
+            window.addEventListener('resize', onResize, false);
+        }
+
+        function createRadiantStar() {
+            topperMesh = new THREE.Group();
+            const mat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+            
+            const core = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2, 0), mat);
+            topperMesh.add(core);
+
+            const spikeGeo = new THREE.ConeGeometry(0.3, 4, 4);
+            const directions = [
+                new THREE.Vector3(1, 1, 1), new THREE.Vector3(-1, 1, 1), 
+                new THREE.Vector3(1, -1, 1), new THREE.Vector3(-1, -1, 1),
+                new THREE.Vector3(1, 1, -1), new THREE.Vector3(-1, 1, -1),
+                new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0),
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, -1, 0),
+                new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1),
+            ];
+
+            directions.forEach(dir => {
+                const spike = new THREE.Mesh(spikeGeo, mat);
+                spike.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+                spike.position.copy(dir.multiplyScalar(1.2)); 
+                topperMesh.add(spike);
+            });
+
+            topperMesh.position.set(0, DESIGN.FORM.HEIGHT/2 + 3, 0);
+            scene.add(topperMesh);
+
+            const light = new THREE.PointLight(0xFFFFFF, 1.2, 30);
+            light.position.set(0, DESIGN.FORM.HEIGHT/2 + 3, 0);
+            scene.add(light);
+        }
+
+        function createCrystals() {
+            const geo = new THREE.OctahedronGeometry(0.35, 0);
+            const mat = new THREE.ShaderMaterial({
+                vertexShader: crystalVertexShader, fragmentShader: crystalFragmentShader,
+                uniforms: { uTime: { value: 0 }, uProgress: { value: 0 } },
+            });
+            
+            const count = DESIGN.COUNTS.CRYSTALS + DESIGN.COUNTS.ORBS;
+            const mesh = new THREE.InstancedMesh(geo, mat, count);
+            
+            const randoms = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const types = new Float32Array(count);
+            
+            for (let i = 0; i < count; i++) {
+                randoms[i*3] = Math.random(); 
+                randoms[i*3+1] = Math.random(); 
+                randoms[i*3+2] = Math.random();
+                
+                types[i] = 0.0; 
+
+                let c;
+                if (Math.random() > 0.85) { 
+                    c = DESIGN.PALETTE.RED_ORNAMENT;
+                    randoms[i*3+2] += 0.8; 
+                } else if (Math.random() > 0.7) {
+                    c = DESIGN.PALETTE.GOLD_RIBBON; 
+                } else {
+                    c = (Math.random() > 0.4) ? DESIGN.PALETTE.PINE_GREEN : DESIGN.PALETTE.PINE_LIGHT;
+                }
+                
+                colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+            }
+            mesh.geometry.setAttribute('aRandom', new THREE.InstancedBufferAttribute(randoms, 3));
+            mesh.geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(colors, 3));
+            mesh.geometry.setAttribute('aType', new THREE.InstancedBufferAttribute(types, 1));
+            scene.add(mesh);
+            if (!window.animatables) window.animatables = [];
+            window.animatables.push(mesh);
+        }
+
+        function createStardust() {
+            const geo = new THREE.BufferGeometry();
+            const count = DESIGN.COUNTS.STARDUST + DESIGN.COUNTS.RIBBONS;
+            const pos = new Float32Array(count * 3);
+            const randoms = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const types = new Float32Array(count);
+            
+            for(let i=0; i<count; i++) {
+                randoms[i*3] = Math.random(); 
+                randoms[i*3+1] = Math.random(); 
+                randoms[i*3+2] = Math.random();
+                
+                let isRibbon = i >= DESIGN.COUNTS.STARDUST;
+                types[i] = isRibbon ? 1.0 : 0.0;
+                
+                let c;
+                if (isRibbon) {
+                    c = DESIGN.PALETTE.GOLD_RIBBON;
+                } else {
+                    let r = Math.random();
+                    if (r > 0.95) c = DESIGN.PALETTE.RED_ORNAMENT; 
+                    else if (r > 0.85) c = DESIGN.PALETTE.SNOW_WHITE; 
+                    else if (r > 0.7) c = DESIGN.PALETTE.GOLD_RIBBON; 
+                    else c = DESIGN.PALETTE.PINE_GREEN;
+                }
+                
+                colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
+            geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+            geo.setAttribute('aType', new THREE.BufferAttribute(types, 1));
+            
+            const mat = new THREE.ShaderMaterial({
+                vertexShader: stardustVertexShader, fragmentShader: stardustFragmentShader,
+                uniforms: { uTime: { value: 0 }, uProgress: { value: 0 }, uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) } },
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+            });
+            starSystem = new THREE.Points(geo, mat);
+            starSystem.frustumCulled = false;
+            scene.add(starSystem);
+        }
+
+        function createSparkles() {
+            const count = DESIGN.COUNTS.SPARKLES;
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(count * 3); 
+            const randoms = new Float32Array(count * 3);
+            const normals = new Float32Array(count * 3);
+            
+            for(let i=0; i<count; i++) {
+                randoms[i*3] = Math.random();
+                randoms[i*3+1] = Math.random();
+                randoms[i*3+2] = Math.random();
+                
+                const rTheta = Math.random() * Math.PI * 2;
+                const rPhi = Math.acos(2 * Math.random() - 1);
+                normals[i*3] = Math.sin(rPhi) * Math.cos(rTheta);
+                normals[i*3+1] = Math.sin(rPhi) * Math.sin(rTheta);
+                normals[i*3+2] = Math.cos(rPhi);
+            }
+            
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
+            geo.setAttribute('aRandomNormal', new THREE.BufferAttribute(normals, 3));
+            
+            const mat = new THREE.ShaderMaterial({
+                vertexShader: sparkleVertexShader,
+                fragmentShader: sparkleFragmentShader,
+                uniforms: { 
+                    uTime: { value: 0 },
+                    uProgress: { value: 0 },
+                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+                    uSpeed: { value: 0 } 
+                },
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            
+            sparkleSystem = new THREE.Points(geo, mat);
+            scene.add(sparkleSystem);
+        }
+
+        function createGallery() {
+            photoGroup = new THREE.Group();
+            scene.add(photoGroup);
+            const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
+            
+            DESIGN.PHOTOS.forEach((url, i) => {
+                const holder = new THREE.Group();
+                const border = new THREE.Mesh(
+                    new THREE.BoxGeometry(6.1, 7.6, 0.05),
+                    new THREE.MeshBasicMaterial({ color: 0xD4AF37 }) 
+                );
+                const photo = new THREE.Mesh(
+                    new THREE.PlaneGeometry(6, 6),
+                    new THREE.MeshBasicMaterial({ color: 0x000000 })
+                );
+                photo.position.set(0, 0.5, 0.04);
+                
+                holder.add(border); holder.add(photo);
+                
+                loader.load(url, (tex) => { 
+                    photo.material.map = tex; 
+                    photo.material.color.setHex(0xffffff);
+                    photo.material.needsUpdate = true; 
+                });
+
+                const angle = (i / DESIGN.PHOTOS.length) * Math.PI * 2;
+                const r = 38; 
+                const y = (Math.random() - 0.5) * 50;
+                holder.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
+                holder.lookAt(0, y, 0); holder.rotateY(Math.PI);
+                
+                holder.userData = { 
+                    origin: holder.position.clone(), 
+                    rot: holder.rotation.clone()
+                };
+                photoGroup.add(holder);
+            });
+        }
+
+        function getFocusedPhotoIndex(mouseNDC) {
+            if (!photoGroup) return 0;
+
+            if (mouseNDC) {
+                raycaster.setFromCamera(mouseNDC, camera);
+                const intersects = raycaster.intersectObjects(photoGroup.children, true);
+                if (intersects.length > 0) {
+                    let target = intersects[0].object;
+                    while(target.parent && target.parent !== photoGroup) {
+                        target = target.parent;
+                    }
+                    return photoGroup.children.indexOf(target);
+                }
+            }
+
+            let minDist = Infinity;
+            let bestIndex = 0;
+            const targetNDC = mouseNDC || new THREE.Vector2(0, 0);
+
+            photoGroup.children.forEach((item, index) => {
+                const worldPos = new THREE.Vector3();
+                item.getWorldPosition(worldPos);
+                const screenPos = worldPos.clone().project(camera);
+                
+                if (screenPos.z < 1 && screenPos.z > -1) {
+                     const dist = new THREE.Vector2(screenPos.x, screenPos.y).distanceTo(targetNDC);
+                     if (dist < minDist) {
+                         minDist = dist;
+                         bestIndex = index;
+                     }
+                }
+            });
+            return bestIndex;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            
+            state.mouseSpeed *= 0.92;
+            if(state.mouseSpeed < 0.001) state.mouseSpeed = 0;
+            
+            state.bloom += (state.targetBloom - state.bloom) * 0.05;
+            
+            if (!state.zooming) {
+                 state.rotationOffset += (state.targetRotation - state.rotationOffset) * 0.05;
+            }
+            
+            const targetZ = state.zooming ? 1 : 0;
+            state.zoomLevel += (targetZ - state.zoomLevel) * 0.08; 
+
+            const currentExposure = THREE.MathUtils.lerp(DESIGN.LOOK.EXPOSURE, DESIGN.LOOK.ZOOM_EXPOSURE, state.zoomLevel);
+            const currentBloomStr = THREE.MathUtils.lerp(DESIGN.LOOK.BLOOM_STRENGTH, DESIGN.LOOK.ZOOM_BLOOM, state.zoomLevel);
+            
+            renderer.toneMappingExposure = currentExposure;
+            bloomPass.strength = currentBloomStr;
+
+            if(window.animatables) window.animatables.forEach(m => {
+                m.material.uniforms.uTime.value = time;
+                m.material.uniforms.uProgress.value = state.bloom;
+            });
+            if(starSystem) {
+                starSystem.material.uniforms.uTime.value = time;
+                starSystem.material.uniforms.uProgress.value = state.bloom;
+            }
+            if(sparkleSystem) {
+                sparkleSystem.material.uniforms.uTime.value = time;
+                sparkleSystem.material.uniforms.uProgress.value = state.bloom;
+                sparkleSystem.material.uniforms.uSpeed.value = state.mouseSpeed;
+            }
+
+            if (topperMesh) {
+                topperMesh.rotation.y = time * 0.1; 
+                topperMesh.rotation.z = Math.sin(time * 0.8) * 0.05; 
+                topperMesh.scale.setScalar(1.0 + Math.sin(time * 2.0) * 0.05); 
+                
+                if (state.bloom > 0.1) {
+                    topperMesh.position.y = DESIGN.FORM.HEIGHT/2 + 3 + state.bloom * 25;
+                } else {
+                    topperMesh.position.y = DESIGN.FORM.HEIGHT/2 + 3;
+                }
+            }
+
+            if (state.bloom < 0.5 && !state.zooming) {
+                camera.position.x = Math.sin(time * 0.03) * 120;
+                camera.position.z = Math.cos(time * 0.03) * 120;
+                camera.lookAt(0, 5, 0);
+            }
+
+            if (Math.abs(state.rotationOffset) > 0.01) {
+                 scene.rotation.y = -state.rotationOffset;
+                 scene.updateMatrixWorld();
+            }
+
+            if (photoGroup) {
+                const camDir = new THREE.Vector3(); 
+                camera.getWorldDirection(camDir);
+                const camRight = new THREE.Vector3().crossVectors(camDir, camera.up).normalize();
+                const camUp = new THREE.Vector3().crossVectors(camRight, camDir).normalize();
+
+                photoGroup.children.forEach((item, idx) => {
+                    const data = item.userData;
+                    let targetPos = new THREE.Vector3();
+                    let targetScale = 1.0;
+
+                    if (state.bloom > 0.01) {
+                        const radius = 55; 
+                        const spreadAngle = Math.PI / 1.5; 
+                        
+                        const count = DESIGN.PHOTOS.length;
+                        const angleStep = spreadAngle / (count - 1 || 1);
+                        const angleOffset = (idx - (count - 1) / 2) * angleStep;
+                        
+                        const photoDir = camDir.clone().applyAxisAngle(camUp, -angleOffset);
+                        
+                        const yOffset = Math.sin(idx * 2 + time) * 3.0;
+                        targetPos.copy(camera.position).add(photoDir.multiplyScalar(radius));
+                        targetPos.y += yOffset;
+                        
+                        item.lookAt(camera.position); 
+                    } else {
+                        targetPos = data.origin.clone();
+                        item.rotation.y += 0.005; 
+                    }
+
+                    if (state.zoomLevel > 0.01) {
+                        if (idx === state.zoomIndex) {
+                            const centerPos = new THREE.Vector3().copy(camera.position).add(camDir.multiplyScalar(15));
+                            item.parent.worldToLocal(centerPos);
+                            targetPos.copy(centerPos);
+                            item.lookAt(camera.position);
+                            targetScale = 2.0;
+                        } else {
+                            targetScale = (state.bloom > 0.01) ? 0.5 : 0.0;
+                        }
+                    }
+
+                    item.position.lerp(targetPos, 0.1);
+                    const s = 1.0 + (targetScale - 1.0) * state.zoomLevel;
+                    item.scale.setScalar(s);
+                });
+            }
+            
+            composer.render();
+        }
+
+        function setupInteractions() {
+            const onDown = (e) => {
+                if (e.button === 0) {
+                    state.targetBloom = 1;
+                    updateStatus("CELEBRATING");
+                } else if (e.button === 2) {
+                    e.preventDefault();
+                    
+                    const mouse = new THREE.Vector2();
+                    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+                    state.zoomIndex = getFocusedPhotoIndex(mouse);
+                    
+                    state.zooming = true;
+                    updateStatus("MEMORIES");
+                }
+            };
+            const onUp = (e) => {
+                if (e.button === 0) {
+                    state.targetBloom = 0;
+                    updateStatus("GATHERING");
+                } else if (e.button === 2) {
+                    state.zooming = false;
+                    updateStatus("CELEBRATING");
+                }
+            };
+            
+            const onMove = (e) => {
+                const nx = (e.clientX / window.innerWidth) * 2 - 1; 
+                state.targetRotation = nx * 1.0; 
+                
+                const dist = Math.hypot(e.clientX - state.lastMouseX, e.clientY - state.lastMouseY);
+                state.mouseSpeed += dist * 0.003; 
+                if(state.mouseSpeed > 1.0) state.mouseSpeed = 1.0;
+                
+                state.lastMouseX = e.clientX;
+                state.lastMouseY = e.clientY;
+            };
+
+            document.addEventListener('mousedown', onDown);
+            document.addEventListener('mouseup', onUp);
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('touchstart', (e) => { state.targetBloom = 1; }, {passive: false});
+            document.addEventListener('touchend', (e) => { state.targetBloom = 0; });
+        }
+
+        function initVisionAI() {
+            const videoElement = document.getElementById('webcam-preview');
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+            try {
+                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`});
+                hands.setOptions({ maxNumHands: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+                hands.onResults(results => {
+                    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                        state.gestureActive = true;
+                        const lm = results.multiHandLandmarks[0];
+                        const palmX = lm[9].x; 
+                        
+                        const handMove = Math.abs(state.targetRotation - (0.5 - palmX) * 3.0);
+                        state.mouseSpeed += handMove * 0.5;
+                        if(state.mouseSpeed > 1.0) state.mouseSpeed = 1.0;
+                        
+                        state.targetRotation = (0.5 - palmX) * 3.0; 
+                        
+                        const pinchDist = Math.hypot(lm[8].x - lm[4].x, lm[8].y - lm[4].y);
+                        
+                        if (pinchDist < 0.05) {
+                             if (!state.zooming) {
+                                state.zoomIndex = getFocusedPhotoIndex(null); 
+                                state.zooming = true;
+                                updateStatus("LOCKED MEMORY");
+                             }
+                        } else {
+                             state.zooming = false;
+                             const isFist = lm[8].y > lm[5].y; 
+                             if (isFist) {
+                                 state.targetBloom = 0;
+                                 updateStatus("HOLDING");
+                             } else {
+                                 state.targetBloom = 1;
+                                 updateStatus("RELEASING");
+                             }
+                        }
+                    } else {
+                        state.gestureActive = false;
+                    }
+                });
+                const camera = new Camera(videoElement, {
+                    onFrame: async () => { if (videoElement.readyState>=2) await hands.send({image: videoElement}).catch(()=>{}); },
+                    width: 320, height: 240
+                });
+                camera.start().catch(()=>{});
+            } catch(e) {}
+        }
+
+        function updateStatus(msg) {
+            const el = document.getElementById('status');
+            el.innerText = msg;
+            if (msg.includes("Interact")) el.classList.remove('active');
+            else el.classList.add('active');
+        }
+
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            if(starSystem) starSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
+            if(sparkleSystem) sparkleSystem.material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
+        }
+
+        init();
+    </script>
 </body>
 </html>
